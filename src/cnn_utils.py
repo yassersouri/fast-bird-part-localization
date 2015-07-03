@@ -1,44 +1,46 @@
 import settings
 import sys
+import os
 import numpy as np
 import cv2
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 
+DEFAULT_MODEL_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'models', 'caffenet_no_fc.prototxt')
+IMAGENET_MEAN = np.array([104.00698793,  116.66876762,  122.67891434])
+
 
 class DeepHelper(object):
 
     @staticmethod
-    def get_bvlc_net(test_phase=True, gpu_mode=True):
-        net = caffe.Classifier(settings.DEFAULT_MODEL_FILE, settings.DEFAULT_PRETRAINED_FILE, mean=np.load(settings.ILSVRC_MEAN), channel_swap=(2, 1, 0), raw_scale=255)
-        if test_phase:
-            net.set_phase_test()
+    def get_caffenet(gpu_mode=True):
+        """
+        returns a net and a trasformer for that net in a tuple: (net, transformer)
+        """
+        net = caffe.Net(DEFAULT_MODEL_FILE, settings.CAFFE_NET_PRETRAINED, caffe.TEST)
         if gpu_mode:
-            net.set_mode_gpu()
-
-        return net
-
-    @staticmethod
-    def get_custom_net(model_def, pretrained_file, test_phase=True, gpu_mode=True):
-        net = caffe.Classifier(model_def, pretrained_file, mean=np.load(settings.ILSVRC_MEAN),  channel_swap=(2, 1, 0), raw_scale=255)
-        if test_phase:
-            net.set_phase_test()
-        if gpu_mode:
-            net.set_mode_gpu()
-
+            caffe.set_mode_gpu()
         return net
 
     layers = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
     feats = {}
     num_feats = {}
 
-    def __init__(self, net=None):
+    def __init__(self, net=None, net_layers=None, interpolation=cv2.INTER_LINEAR):
         if net is None:
-            self.net = self.get_bvlc_net()
+            self.net = self.get_caffenet(settings.GPU_MODE)
         else:
             self.net = net
+        if net_layers is not None:
+            self.layers = net_layers
+
+        self.interpolation_type = interpolation
 
     def init_with_image(self, img):
+        # TODO: Here we need a forward pass only
+        # Also we need to save the size of the image and resize the
+        # feature layers to this size.
+        self.input_image_size = img.shape[:2]
         self.net.predict([img], oversample=False)
         self._make_features_ready()
 
@@ -48,7 +50,7 @@ class DeepHelper(object):
 
             data = data.swapaxes(0, 2)
             data = data.swapaxes(0, 1)
-            data = cv2.resize(data, (self.input_dim, self.input_dim), interpolation=cv2.INTER_LINEAR)
+            data = cv2.resize(data, self.input_image_size, interpolation=self.interpolation_type)
 
             _, _, num_feat = data.shape
 
@@ -82,6 +84,7 @@ class DeepHelper(object):
         part_positive = gen_part_points(part_parts.get_rect_info(img.shape), seg, N_part)
         part_negative = gen_bg_points(part_parts.get_rect_info(img.shape), seg, N_bg)
 
+        # TODO: we don't have input_dim any more we have an input_image_size
         part_positive.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
         part_negative.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
 
@@ -100,6 +103,7 @@ class DeepHelper(object):
         part_positive = gen_part_points(part_rect_info, seg, N_part)
         part_negative = gen_bg_points(part_rect_info, seg, N_bg)
 
+        # TODO: we don't have input_dim any more we have an input_image_size!
         part_positive.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
         part_negative.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
 
