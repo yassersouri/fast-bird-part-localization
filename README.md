@@ -11,3 +11,19 @@ Code for Fast Bird Part Localization (FGVC 2015)
 
 ## Getting Started
 
+For testing or training you need the pretrained CaffeNet network. You can download it from [this url](http://dl.caffe.berkeleyvision.org/bvlc_reference_caffenet.caffemodel). After downloading it, make sure you change the `src/settings.py` file and change the `CAFFE_NET_PRETRAINED` variable accordingly.
+
+### Testing
+
+```python
+import sys
+sys.path.append('src')
+import settings
+sys.path.append(settings.CAFFE_PYTHON_PATH)
+import caffe
+import detector
+
+img = caffe.io.load_image('bird.jpg')
+head = detector.detect_head(img)
+detector.draw_head(img, head)
+```
