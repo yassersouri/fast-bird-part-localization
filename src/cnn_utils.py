@@ -15,12 +15,17 @@ class DeepHelper(object):
     @staticmethod
     def get_caffenet(gpu_mode=True):
         """
-        returns a net and a trasformer for that net in a tuple: (net, transformer)
+        returns a net and a transformer for that net in a tuple: (net, transformer)
         """
         net = caffe.Net(DEFAULT_MODEL_FILE, settings.CAFFE_NET_PRETRAINED, caffe.TEST)
+        transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
+        transformer.set_transpose('data', (2, 0, 1))
+        transformer.set_mean('data', IMAGENET_MEAN)
+        transformer.set_raw_scale('data', 255)
+        transformer.set_channel_swap('data', (2, 1, 0))
         if gpu_mode:
             caffe.set_mode_gpu()
-        return net
+        return net, transformer
 
     layers = ['conv1', 'conv2', 'conv3', 'conv4', 'conv5']
     feats = {}
@@ -28,7 +33,7 @@ class DeepHelper(object):
 
     def __init__(self, net=None, net_layers=None, interpolation=cv2.INTER_LINEAR):
         if net is None:
-            self.net = self.get_caffenet(settings.GPU_MODE)
+            self.net, self.transformer = self.get_caffenet(settings.GPU_MODE)
         else:
             self.net = net
         if net_layers is not None:
