@@ -18,6 +18,7 @@ class DeepHelper(object):
         returns a net and a transformer for that net in a tuple: (net, transformer)
         """
         net = caffe.Net(DEFAULT_MODEL_FILE, settings.CAFFE_NET_PRETRAINED, caffe.TEST)
+
         transformer = caffe.io.Transformer({'data': net.blobs['data'].data.shape})
         transformer.set_transpose('data', (2, 0, 1))
         transformer.set_mean('data', IMAGENET_MEAN)
@@ -31,11 +32,8 @@ class DeepHelper(object):
     feats = {}
     num_feats = {}
 
-    def __init__(self, net=None, net_layers=None, interpolation=cv2.INTER_LINEAR):
-        if net is None:
-            self.net, self.transformer = self.get_caffenet(settings.GPU_MODE)
-        else:
-            self.net = net
+    def __init__(self, net_layers=None, interpolation=cv2.INTER_LINEAR):
+        self.net, self.transformer = self.get_caffenet(settings.GPU_MODE)
         if net_layers is not None:
             self.layers = net_layers
 
@@ -45,17 +43,29 @@ class DeepHelper(object):
         # TODO: Here we need a forward pass only
         # Also we need to save the size of the image and resize the
         # feature layers to this size.
+        # Also we need to change the size of the transformer
+
+        # resizing transformer and network with respect to the input image
         self.input_image_size = img.shape[:2]
-        self.net.predict([img], oversample=False)
+        new_size = [1, 3, self.input_image_size[0], self.input_image_size[1]]
+        self.transformer.inputs['data'] = new_size
+        self.net.blobs['data'].reshape(*new_size)
+
+        # preprocessing the image
+        self.net.blobs['data'].data[...] = self.transformer.preprocess('data', img)
+
+        # forward pass
+        self.net.forward()
+
         self._make_features_ready()
 
     def _make_features_ready(self):
         for layer in self.layers:
-            data = self.net.blobs[layer].data[self.crop_dim]
+            data = self.net.blobs[layer].data[0]
 
             data = data.swapaxes(0, 2)
             data = data.swapaxes(0, 1)
-            data = cv2.resize(data, self.input_image_size, interpolation=self.interpolation_type)
+            data = cv2.resize(data, (self.input_image_size[1], self.input_image_size[0]), interpolation=self.interpolation_type)
 
             _, _, num_feat = data.shape
 
