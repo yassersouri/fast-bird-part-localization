@@ -40,11 +40,6 @@ class DeepHelper(object):
         self.interpolation_type = interpolation
 
     def init_with_image(self, img):
-        # TODO: Here we need a forward pass only
-        # Also we need to save the size of the image and resize the
-        # feature layers to this size.
-        # Also we need to change the size of the transformer
-
         # resizing transformer and network with respect to the input image
         self.input_image_size = img.shape[:2]
         new_size = [1, 3, self.input_image_size[0], self.input_image_size[1]]
@@ -65,6 +60,8 @@ class DeepHelper(object):
 
             data = data.swapaxes(0, 2)
             data = data.swapaxes(0, 1)
+
+            # since the opencv's size is (cols, rows) and not (height, width) as in numpy
             data = cv2.resize(data, (self.input_image_size[1], self.input_image_size[0]), interpolation=self.interpolation_type)
 
             _, _, num_feat = data.shape
