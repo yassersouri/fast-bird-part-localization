@@ -10,6 +10,125 @@ DEFAULT_MODEL_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.realpa
 IMAGENET_MEAN = np.array([104.00698793,  116.66876762,  122.67891434])
 
 
+class Box(object):
+    """
+    This class represents a box in an image. This could be a bounding box of an object or part.
+    Internally each box is represented by a tuple of 4 integers: (xmin, xmax, ymin, ymax)
+    """
+
+    def __init__(self, xmin, xmax, ymin, ymax):
+        self.xmin = xmin
+        self.xmax = xmax
+        self.ymin = ymin
+        self.ymax = ymax
+
+    @staticmethod
+    def box_from_cendim(cen, dim):
+        """
+        Create a box from a pair of center and dimension. Each center or dimension is a tuple. For short we call the center and dimension the `cendim`
+        Center: (cenX, cenY)
+        Dimension: (height, width)
+        """
+        cenX, cenY = cen
+        height, width = dim
+        height_2 = height / 2.
+        width_2 = width / 2.
+        xmin = int(round(cenX - height_2))
+        xmax = int(round(cenX + height_2))
+        ymin = int(round(cenY - width_2))
+        ymax = int(round(cenY + width_2))
+        return Box(xmin, xmax, ymin, ymax)
+
+    def cendim(self):
+        """
+        Convert the box into cendim format. In cendim format the center and dimension are stored as floating point numbers.
+        """
+        cenX = float(self.xmin + self.xmax) / 2
+        cenY = float(self.ymin + self.ymax) / 2
+        height = float(self.xmax - self.xmin)
+        width = float(self.ymax - self.ymin)
+
+        cen = (cenX, cenY)
+        dim = (height, width)
+        return cen, dim
+
+    def trim_to_borders(self, img):
+        """
+        Trims the box with respect to the image provided.
+        """
+        img_h, img_w = img.shape[:2]
+        self.xmin = max(0, self.xmin)
+        self.xmax = min(img_h - 1, self.xmax)
+        self.ymin = max(0, self.ymin)
+        self.ymax = min(img_w - 1, self.ymax)
+
+        return self
+
+    def draw_box(self, img, color=(1, 0, 0), width=2):
+        """
+        Annotate the `img` with this Box. This returns a new image with the box annotated on it.
+        """
+        new_img = img.copy()
+
+        cv2.rectangle(new_img, (self.ymin, self.xmin), (self.ymax, self.xmax), color, width)
+        return new_img
+
+    def get_sub_image(self, img):
+        """
+        Return a sub-image only containing information inside this Box.
+        """
+        self.trim_to_borders(img)
+
+        return img[self.xmin:self.xmax, self.ymin:self.ymax]
+
+    @staticmethod
+    def expand_cendim(cen, dim, alpha):
+        height, width = dim
+
+        height = (2 * alpha) * height
+        width = (2 * alpha) * width
+
+        dim = (height, width)
+        return cen, dim
+
+    def expand(self, alpha=0.666):
+        cen, dim = self.cendim()
+        cen, dim = Box.expand_cendim(cen, dim, alpha)
+        new_box = Box.box_from_cendim(cen, dim)
+        self.xmin = new_box.xmin
+        self.xmax = new_box.xmax
+        self.ymin = new_box.ymin
+        self.ymax = new_box.ymax
+
+        return self
+
+    def evalIOU(self, get_box, source_shape):
+        # TODO
+        # making sure not to generate errors further down the line
+        self.trim_to_borders(source_shape)
+        get_box.trim_to_borders(source_shape)
+
+        height, width = source_shape[:2]
+
+        gt_part = np.zeros((height, width), np.uint8)
+        gt_part[get_box.xmin:get_box.xmax, get_box.ymin:get_box.ymax] = 1
+
+        sl_part = np.zeros((height, width), np.uint8)
+        sl_part[self.xmin:self.xmax, self.ymin:self.ymax] = 1
+
+        intersection = (gt_part & sl_part).sum()
+        union = (gt_part | sl_part).sum()
+
+        return intersection / float(union)
+
+    def evalPCP(self, get_box, source_shape, thresh=0.5):
+        iou = self.evalIOU(get_box, source_shape)
+        if iou >= thresh:
+            return 1
+        else:
+            return 0
+
+
 class DeepHelper(object):
 
     @staticmethod
