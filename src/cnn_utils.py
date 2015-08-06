@@ -161,7 +161,8 @@ class Box(object):
                 points[i, :] = [int(round(s[0])), int(round(s[1]))]
 
             points += np.array([self.xmin, self.ymin])
-            return points
+
+        return points
 
 
 def draw_points(points, ax, color=None):
