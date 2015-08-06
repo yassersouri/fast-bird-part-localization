@@ -3,6 +3,7 @@ import sys
 import os
 import numpy as np
 import cv2
+from poisson_disk import PoissonDiskSampler
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 
@@ -15,6 +16,8 @@ class Box(object):
     This class represents a box in an image. This could be a bounding box of an object or part.
     Internally each box is represented by a tuple of 4 integers: (xmin, xmax, ymin, ymax)
     """
+
+    POINT_GENERATION_POLECIES = ['poisson_disk']
 
     def __init__(self, xmin, xmax, ymin, ymax):
         self.xmin = xmin
@@ -128,6 +131,45 @@ class Box(object):
         else:
             return 0
 
+    def generate_points_inside(self, policy='poisson_disk', param=None, img=None):
+        """
+        This function generates points inside this rectangle. It uses the poisson disk to do it by default. But there is a policy option that is configurable.
+        There is an optional `param` parameter that specifies the parameters of the generation policy.
+
+        Different Policies:
+            - `poisson_disk`:
+                The param is expected to be the tuple (radius, max_num).
+                By default radius is set to be average of 1/10 of width and height of the box. Also max_num is set to 100.
+
+        Each point is a row vector [x, y]. A set of `n` points will be represented as a numpy array of shape (n,2). The dtype is numpy.int.
+
+        There can be an optional img option. We can use the image's shape to further prune points that are located outside the boundary of the image.
+        """
+        assert(policy in self.POINT_GENERATION_POLECIES)
+        cen, dim = self.cendim()
+        height, width = dim
+        if policy == 'poisson_disk':
+            if param is None:
+                radius = ((height / 10.) + (width / 10.)) / 2.
+                max_num = 100
+            else:
+                radius, max_num = param
+            pds = PoissonDiskSampler(width, height, radius, k=max_num)
+            samples = pds.get_sample()
+            points = np.zeros((len(samples), 2), dtype=np.int)
+            for i, s in enumerate(samples):
+                points[i, :] = [int(round(s[0])), int(round(s[1]))]
+
+            points += np.array([self.xmin, self.ymin])
+            return points
+
+
+def draw_points(points, ax, color=None):
+    if color is None:
+        color = 'red'
+    for p in points:
+        ax.plot(p[0], p[1], 'o', color=color)
+
 
 class DeepHelper(object):
 
@@ -198,85 +240,9 @@ class DeepHelper(object):
         features = np.zeros((n_points, n_features))
 
         for i, point in enumerate(points):
+            # @TODO fix this.
             x, y = point.y - 1, point.x - 1  # not because I'm idoit, but because of other things!
             # feat_layers = [self.feats[l][x, y, :] for l in layers]
             features[i, :] = self.ffeats[x, y, :]
 
         return features
-
-    def part_for_image(self, all_image_infos, all_segmentaion_infos, cub_parts, img_id, part_filter_names, N_part=10, N_bg=100):
-        img = caffe.io.load_image(all_image_infos[img_id])
-        seg = thresh_segment_mean(caffe.io.load_image(all_segmentaion_infos[img_id]))
-
-        self.init_with_image(img)
-
-        parts = cub_parts.for_image(img_id)
-        part_parts = parts.filter_by_name(part_filter_names)
-        part_positive = gen_part_points(part_parts.get_rect_info(img.shape), seg, N_part)
-        part_negative = gen_bg_points(part_parts.get_rect_info(img.shape), seg, N_bg)
-
-        # TODO: we don't have input_dim any more we have an input_image_size
-        part_positive.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
-        part_negative.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
-
-        feats_positive = self.features(part_positive)
-        feats_negative = self.features(part_negative)
-
-        return feats_positive, feats_negative
-
-    def part_for_image_local(self, all_image_infos, all_segmentaion_infos, bah, img_id, part_name, N_part, N_bg):
-        img = caffe.io.load_image(all_image_infos[img_id])
-        seg = thresh_segment_mean(caffe.io.load_image(all_segmentaion_infos[img_id]))
-
-        self.init_with_image(img)
-
-        part_rect_info = bah.get_berkeley_annotation(img_id, part_name)
-        part_positive = gen_part_points(part_rect_info, seg, N_part)
-        part_negative = gen_bg_points(part_rect_info, seg, N_bg)
-
-        # TODO: we don't have input_dim any more we have an input_image_size!
-        part_positive.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
-        part_negative.norm_for_size(img.shape[1], img.shape[0], self.input_dim)
-
-        feats_positive = self.features(part_positive)
-        feats_negative = self.features(part_negative)
-
-        return feats_positive, feats_negative
-
-    def part_features_for_rf(self, all_image_infos, all_segmentaion_infos, cub_parts, IDs, part_filter_names, N_part=10, N_bg=100):
-        positives = []
-        negatives = []
-        for i, img_id in enumerate(IDs):
-            feats_positive, feats_negative = self.part_for_image(all_image_infos, all_segmentaion_infos, cub_parts, img_id, part_filter_names, N_part, N_bg)
-
-            positives.append(feats_positive)
-            negatives.append(feats_negative)
-        X_pos = np.vstack(positives)
-        y_pos = np.ones((X_pos.shape[0]), np.int)
-        X_neg = np.vstack(negatives)
-        y_neg = np.zeros((X_neg.shape[0]), np.int)
-
-        X = np.vstack((X_pos, X_neg))
-        y = np.concatenate((y_pos, y_neg))
-
-        return X, y
-
-    def part_features_for_local_rf(self, all_image_infos, all_segmentaion_infos, bah, IDs, part_name, N_part=10, N_bg=100):
-        positives = []
-        negatives = []
-
-        for i, img_id in enumerate(IDs):
-            feats_positive, feats_negative = self.part_for_image_local(all_image_infos, all_segmentaion_infos, bah, img_id, part_name, N_part, N_bg)
-
-            positives.append(feats_positive)
-            negatives.append(feats_negative)
-
-        X_pos = np.vstack(positives)
-        y_pos = np.ones((X_pos.shape[0]), np.int)
-        X_neg = np.vstack(negatives)
-        y_neg = np.zeros((X_neg.shape[0]), np.int)
-
-        X = np.vstack((X_pos, X_neg))
-        y = np.concatenate((y_pos, y_neg))
-
-        return X, y
