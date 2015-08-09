@@ -138,8 +138,8 @@ class Box(object):
 
         Different Policies:
             - `poisson_disk`:
-                The param is expected to be the tuple (radius, max_num).
-                By default radius is set to be average of 1/10 of width and height of the box. Also max_num is set to 100.
+                The param is expected to be the radius. The radius is the parameter of the poisson disk sampler.
+                By default radius is set to be average of 1/10 of width and height of the box.
 
         Each point is a row vector [x, y]. A set of `n` points will be represented as a numpy array of shape (n,2). The dtype is numpy.int.
 
@@ -151,10 +151,9 @@ class Box(object):
         if policy == 'poisson_disk':
             if param is None:
                 radius = ((height / 10.) + (width / 10.)) / 2.
-                max_num = 100
             else:
-                radius, max_num = param
-            pds = PoissonDiskSampler(width, height, radius, k=max_num)
+                radius = param
+            pds = PoissonDiskSampler(width, height, radius)
             samples = pds.get_sample()
             points = np.zeros((len(samples), 2), dtype=np.int)
             for i, s in enumerate(samples):
