@@ -200,9 +200,13 @@ class DeepHelper(object):
 
         self.interpolation_type = interpolation
 
-    def init_with_image(self, img):
+    def init_with_image(self, img, half=False):
         # resizing transformer and network with respect to the input image
         self.input_image_size = img.shape[:2]
+
+        if half:
+            self.input_image_size = (self.input_image_size[0] / 2, self.input_image_size[1] / 2)
+
         new_size = [1, 3, self.input_image_size[0], self.input_image_size[1]]
         self.transformer.inputs['data'] = new_size
         self.net.blobs['data'].reshape(*new_size)
