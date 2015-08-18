@@ -36,7 +36,7 @@ class CUB_200_2011(object):
         self.part_locs_file = os.path.join(
             self.base_path, self.PARTS_FOLDER_NAME, self.PART_LOCS_FILE_NAME)
 
-    def get_all_images(self):
+    def images(self):
         with open(self.images_file, 'r') as images_file:
             for line in images_file:
                 parts = line.split()
@@ -46,12 +46,12 @@ class CUB_200_2011(object):
                        'img_file': os.path.join(folder, parts[1]),
                        'img_file_rel': parts[1]}
 
-    def get_all_image_addrs(self, relative=False):
+    def image_addrs(self, relative=False):
         """
         returns a hash from image_id to image address, which can be relative to the images_folder name or absolute.
         By default it generates absolute addresses.
         """
-        all_infos = list(self.get_all_images())
+        all_infos = list(self.images())
         the_hash = {}
 
         info_key = 'img_file'
@@ -63,7 +63,10 @@ class CUB_200_2011(object):
 
         return the_hash
 
-    def get_train_test_id(self):
+    def train_test_id(self):
+        """
+        returns a tuple of 1d numpy arrays (IDtrain, IDtest), where each contains a list of img_ids for the corresponding set.
+        """
         trains = []
         tests = []
         indicators = []
@@ -108,9 +111,9 @@ class CUB_200_2011(object):
 
         return IDtrain, IDtest
 
-    def get_bbox(self):
+    def bboxes(self):
         """
-        generates a set of bounding_boxes
+        generates a dictionary of image_id to bounding boxes
         """
         bbox_dict = {}
         bbox = np.genfromtxt(self.bbox_file, delimiter=' ')
@@ -120,7 +123,7 @@ class CUB_200_2011(object):
             bbox_dict[i+1] = geometry_utils.Box(int(b[1]), int(b[1] + b[3]), int(b[0]), int(b[0] + b[2]))
         return bbox_dict
 
-    def get_class_dict(self):
+    def class_dict(self):
         """
         returns a dictionary from image_id to class_id.
         """
