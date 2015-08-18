@@ -17,6 +17,12 @@ class Box(object):
         self.ymin = ymin
         self.ymax = ymax
 
+    def __repr__(self):
+        return "%d - %d - %d - %d" % (self.xmin, self.xmax, self.ymin, self.ymax)
+
+    def is_valid(self):
+        return int(self.xmin) != -1
+
     @staticmethod
     def box_from_cendim(cen, dim):
         """
@@ -47,11 +53,11 @@ class Box(object):
         dim = (height, width)
         return cen, dim
 
-    def trim_to_borders(self, img):
+    def trim_to_borders(self, img_shape):
         """
         Trims the box with respect to the image provided.
         """
-        img_h, img_w = img.shape[:2]
+        img_h, img_w = img_shape[:2]
         self.xmin = max(0, self.xmin)
         self.xmax = min(img_h - 1, self.xmax)
         self.ymin = max(0, self.ymin)
@@ -72,7 +78,7 @@ class Box(object):
         """
         Return a sub-image only containing information inside this Box.
         """
-        self.trim_to_borders(img)
+        self.trim_to_borders(img.shape)
 
         return img[self.xmin:self.xmax, self.ymin:self.ymax]
 
@@ -145,7 +151,8 @@ class Box(object):
                 radius = ((height / 10.) + (width / 10.)) / 2.
             else:
                 radius = param
-            pds = PoissonDiskSampler(width, height, radius)
+            # please note that PoissonDiskSampler does use a flipped version of the axis
+            pds = PoissonDiskSampler(height, width, radius)
             samples = pds.get_sample()
             points = np.zeros((len(samples), 2), dtype=np.int)
             for i, s in enumerate(samples):
@@ -160,4 +167,8 @@ def draw_points(points, ax, color=None):
     if color is None:
         color = 'red'
     for p in points:
-        ax.plot(p[0], p[1], 'o', color=color)
+        # Notice that in plt the axis are different from what we work with
+        # namely in plt the horizontal axis is x and vertical axis is y
+        # whereas in numpy and images that we work with the vertical axis is x
+        # this is the reason behind the flipping of points here.
+        ax.plot(p[1], p[0], 'o', color=color)
