@@ -97,16 +97,16 @@ class Box(object):
 
         return self
 
-    def evalIOU(self, get_box, source_shape):
+    def evalIOU(self, gt_box, source_shape):
         # TODO
         # making sure not to generate errors further down the line
         self.trim_to_borders(source_shape)
-        get_box.trim_to_borders(source_shape)
+        gt_box.trim_to_borders(source_shape)
 
         height, width = source_shape[:2]
 
         gt_part = np.zeros((height, width), np.uint8)
-        gt_part[get_box.xmin:get_box.xmax, get_box.ymin:get_box.ymax] = 1
+        gt_part[gt_box.xmin:gt_box.xmax, gt_box.ymin:gt_box.ymax] = 1
 
         sl_part = np.zeros((height, width), np.uint8)
         sl_part[self.xmin:self.xmax, self.ymin:self.ymax] = 1
@@ -116,8 +116,8 @@ class Box(object):
 
         return intersection / float(union)
 
-    def evalPCP(self, get_box, source_shape, thresh=0.5):
-        iou = self.evalIOU(get_box, source_shape)
+    def evalPCP(self, gt_box, source_shape, thresh=0.5):
+        iou = self.evalIOU(gt_box, source_shape)
         if iou >= thresh:
             return 1
         else:
