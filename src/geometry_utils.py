@@ -24,6 +24,15 @@ class Box(object):
         return int(self.xmin) != -1
 
     @staticmethod
+    def box_from_img(img):
+        """
+        Creats a box from the image
+        """
+
+        height, width = img.shape[:2]
+        return Box(0, height, 0, width)
+
+    @staticmethod
     def box_from_cendim(cen, dim):
         """
         Create a box from a pair of center and dimension. Each center or dimension is a tuple. For short we call the center and dimension the `cendim`
@@ -172,3 +181,17 @@ def draw_points(points, ax, color=None):
         # whereas in numpy and images that we work with the vertical axis is x
         # this is the reason behind the flipping of points here.
         ax.plot(p[1], p[0], 'o', color=color)
+
+
+def filter_points(points, box):
+    """
+    Remove points that lie inside the box from the set.
+    """
+    new_points_ind = []
+    for i, p in enumerate(points):
+        if (box.xmin <= p[0] <= box.xmax and box.ymin <= p[1] <= box.ymax):
+            continue
+        else:
+            new_points_ind.append(i)
+
+    return points[new_points_ind, :]
