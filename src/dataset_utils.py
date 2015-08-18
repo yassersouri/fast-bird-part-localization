@@ -2,6 +2,7 @@ import os
 import numpy as np
 import scipy.io
 import geometry_utils
+import settings
 
 
 class CUB_200_2011(object):
@@ -17,7 +18,7 @@ class CUB_200_2011(object):
     SPLIT_FILE_TRAIN_INDICATOR = '1'
     SPLIT_FILE_TEST_INDICATOR = '0'
 
-    def __init__(self, base_path, images_folder_name=None):
+    def __init__(self, base_path=settings.CUB_FOLDER_PATH, images_folder_name=None):
         self.base_path = base_path
         if images_folder_name:
             self.IMAGES_FOLDER_NAME = images_folder_name
