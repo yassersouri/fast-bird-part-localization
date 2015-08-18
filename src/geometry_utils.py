@@ -161,7 +161,9 @@ class Box(object):
             else:
                 radius = param
             # please note that PoissonDiskSampler does use a flipped version of the axis
-            pds = PoissonDiskSampler(height, width, radius)
+            # also the algorithm generates points in the range [0, height] but we want [0, height) that is
+            # the reason behind the "-1".
+            pds = PoissonDiskSampler(height - 1, width - 1, radius)
             samples = pds.get_sample()
             points = np.zeros((len(samples), 2), dtype=np.int)
             for i, s in enumerate(samples):

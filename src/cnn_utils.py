@@ -3,6 +3,7 @@ import sys
 import os
 import numpy as np
 import cv2
+import geometry_utils
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
 
@@ -76,16 +77,32 @@ class DeepHelper(object):
         self.ffeats = np.concatenate([self.feats[k] for k in self.layers], axis=2)
 
     def features(self, points, layers=None):
-        n_points = len(points)
+        """
+        Extracts the features for a particular set of points.
+        Call this function only after you have called `init_with_image`
+        """
+        n_points = points.shape[0]
         if layers is None:
             layers = self.layers
-        n_features = sum(self.num_feats[l] for l in layers)
+        n_features = self.ffeats.shape[2]
         features = np.zeros((n_points, n_features))
 
         for i, point in enumerate(points):
-            # @TODO fix this.
-            x, y = point.y - 1, point.x - 1  # not because I'm idoit, but because of other things!
-            # feat_layers = [self.feats[l][x, y, :] for l in layers]
-            features[i, :] = self.ffeats[x, y, :]
+            features[i, :] = self.ffeats[point[0], point[1], :]
 
         return features
+
+    def image_point_features(self, img, part_box, part_name):
+        """
+        Extracts a set of positive and negative features from points generated from the image for a particular part.
+        This function calls `init_with_image` so no need to call that yourself.
+        """
+        box = geometry_utils.Box.box_from_img(img)
+        self.init_with_image(img)
+
+        positive_points = part_box.generate_points_inside(param=settings.POISSON_PART_RADIUS[part_name])
+
+        negative_points = box.generate_points_inside(param=settings.POISSON_NEGATIVE_RADIUS, img=img)
+        negative_points = geometry_utils.filter_points(negative_points, part_box)
+
+        return self.features(positive_points), self.features(negative_points)
