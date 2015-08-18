@@ -117,7 +117,7 @@ class CUB_200_2011(object):
         bbox = bbox[:, 1:]
 
         for i, b in enumerate(bbox):
-            bbox_dict[i+1] = geometry_utils.Box(int(b[0]), int(b[1]), int(b[0]) + int(b[3]), int(b[0]) + int(b[2]))
+            bbox_dict[i+1] = geometry_utils.Box(int(b[1]), int(b[1] + b[3]), int(b[0]), int(b[0] + b[2]))
         return bbox_dict
 
     def get_class_dict(self):
