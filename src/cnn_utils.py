@@ -85,7 +85,7 @@ class DeepHelper(object):
         if layers is None:
             layers = self.layers
         n_features = self.ffeats.shape[2]
-        features = np.zeros((n_points, n_features))
+        features = np.zeros((n_points, n_features), dtype=np.float32)
 
         for i, point in enumerate(points):
             features[i, :] = self.ffeats[point[0], point[1], :]

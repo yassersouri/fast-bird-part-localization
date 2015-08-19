@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime as dt
 sys.path.append('src')
 import settings
 import cnn_utils
@@ -24,7 +25,10 @@ def main():
     pos_x = []
     neg_x = []
 
+    start = dt.now()
     for i, img_id in enumerate(IDtrain):
+        if i % 100 == 0:
+            print 'done', i, 'in', (dt.now() - start)
         img = caffe.io.load_image(imgs_addr[img_id])
         part_box = imgs_anno.annotation(img_id, part_name)
         if not part_box.is_valid():
@@ -34,6 +38,7 @@ def main():
         pos_x.append(pos)
         neg_x.append(neg)
 
+    print 'finished collecting in', (dt.now() - start)
     pos_x = np.vstack(pos_x)
     neg_x = np.vstack(neg_x)
 
@@ -43,13 +48,17 @@ def main():
     X = np.vstack((pos_x, neg_x))
     y = np.concatenate((pos_y, neg_y))
 
-    model = sklearn.ensemble.RandomForestClassifier(n_estimators=10, max_depth=20, n_jobs=2, random_state=912)
+    print 'started learning'
+    l_start = dt.now()
+    model = sklearn.ensemble.RandomForestClassifier(n_estimators=10, max_depth=20, n_jobs=1, random_state=912)
     model.fit(X, y)
 
     preds = model.predict_proba(X)
     print sklearn.metrics.auc(y, preds[:, 0])
 
     joblib.dump(model, 'detectors/test_model.mdl', compress=3)
+    print 'learned in', (dt.now() - l_start)
+    print 'finsihed in', (dt.now() - start)
 
 
 if __name__ == '__main__':
