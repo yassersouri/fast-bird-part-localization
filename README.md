@@ -1,3 +1,7 @@
+# Work in Progress
+
+I'm in progress of cleaning up my original code and putting it here. So please wait a little while.
+
 # fast-bird-part
 Code for Fast Bird Part Localization (FGVC 2015)
 
