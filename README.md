@@ -2,6 +2,15 @@
 
 I'm in progress of cleaning up my original code and putting it here. So please wait a little while.
 
+__TODO__:
+ - [ ] Extracting code from notebook about postprocessing.
+ - [ ] Extracting code from notebook about visualization.
+ - [ ] Adding code for PCP evaluation.
+ - [ ] Adding description on how to use the pretrined model.
+ - [ ] Adding description on how to train a new model from CUB or own data.
+ - [ ] Adding bounding box regression for better PCP.
+
+
 # fast-bird-part
 Code for Fast Bird Part Localization (FGVC 2015)
 
