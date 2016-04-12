@@ -1,9 +1,9 @@
 import sys
 from datetime import datetime as dt
-sys.path.append('src')
-import settings
-import cnn_utils
-import dataset_utils
+sys.path.append('.')
+from fast_bird_part_localization import settings
+from fast_bird_part_localization import cnn_utils
+from fast_bird_part_localization import dataset_utils
 import numpy as np
 import sklearn.ensemble
 import sklearn.metrics

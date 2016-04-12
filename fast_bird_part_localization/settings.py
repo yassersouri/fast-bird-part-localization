@@ -7,5 +7,5 @@ GPU_MODE = True
 CUB_FOLDER_PATH = '/home/ipl/datasets/CUB-200-2011/CUB_200_2011/CUB_200_2011'
 
 # Algorithm Settings
-POISSON_PART_RADIUS = {'head': 15}
+POISSON_PART_RADIUS = {'head': 15, 'body': 30}
 POISSON_NEGATIVE_RADIUS = 40
