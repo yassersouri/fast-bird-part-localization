@@ -3,16 +3,23 @@
 I'm in progress of cleaning up my original code and putting it here. So please wait a little while.
 
 __TODO__:
- - [ ] Extracting code from notebook about postprocessing.
- - [ ] Extracting code from notebook about visualization.
+ - [X] Extracting code from notebook about postprocessing.
+ - [X] Extracting code from notebook about visualization.
+ - [X] Adding description on how to use the pretrined model.
+ - [X] Adding description on how to train a new model from CUB.
+ - [ ] Adding description on how to train a new model from own data.
  - [ ] Adding code for PCP evaluation.
- - [ ] Adding description on how to use the pretrined model.
- - [ ] Adding description on how to train a new model from CUB or own data.
  - [ ] Adding bounding box regression for better PCP.
 
 
-# fast-bird-part
-Code for Fast Bird Part Localization (FGVC 2015)
+# fast-bird-part-localization
+Code for Fast Bird Part Localization part of the following paper:
+
+[Fast Bird Part Localization for Fine-Grained Categorization](http://yassersouri.github.io/papers/fgvc-2015-fast-bird-part.pdf)    
+Yaser Souri, Shohreh Kasaei    
+The Third Workshop on Fine-Grained Visual Categorization (FGVC3) in conjunction with CVPR 2015
+
+The code for classification part is very simple and not included in this repository.
 
 
 ## Requirements
@@ -26,17 +33,33 @@ Code for Fast Bird Part Localization (FGVC 2015)
 
 For testing or training you need the pretrained CaffeNet network. You can download it from [this url](http://dl.caffe.berkeleyvision.org/bvlc_reference_caffenet.caffemodel). After downloading it, make sure you change the `src/settings.py` file and change the `CAFFE_NET_PRETRAINED` variable accordingly.
 
+## Training a new head detector
+
+This can be done using the CUB dataset. First download the CUB-200-2011 dataset from [here](http://www.vision.caltech.edu/visipedia/CUB-200-2011.html) and extract it.
+Then change `src/settings.py` file and set the `CUB_FOLDER_PATH` varialble accordingly.
+
+Then run the following command:
+```shell
+python create_rf_model.py
+```
+
+This will create a head detector for you in the models directory. To run this script you will night large amount of RAM (~30GB).
+
+Changing `part_name` variable in `create_rf_model.py` file to `body` instead of `head` will create a detector for body.
+
 ### Testing
 
 ```python
 import sys
-sys.path.append('src')
-import settings
+sys.path.append('/path/to/projectroot/')
+from fast_bird_part_localization import settings
 sys.path.append(settings.CAFFE_PYTHON_PATH)
 import caffe
-import detector
+from fast_bird_part_localization import detector
 
-img = caffe.io.load_image('bird.jpg')
-head = detector.detect_head(img)
-detector.draw_head(img, head)
+fbp = detector('/path/to/project/models/head_model.mdl')
+
+img = caffe.io.load_image('/path/to/bird.jpg')
+head, head_prob = fbp.detect(img)
+fbp.draw(img, head, head_prob)
 ```

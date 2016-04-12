@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 from poisson_disk import PoissonDiskSampler
+import skimage
+import scipy.stats
 
 
 class Box(object):
@@ -197,3 +199,27 @@ def filter_points(points, box):
             new_points_ind.append(i)
 
     return points[new_points_ind, :]
+
+
+def post_process_preds(preds):
+    preds = skimage.morphology.closing(preds, skimage.morphology.square(10))
+    preds = skimage.morphology.remove_small_objects(preds, min_size=10, connectivity=1)
+    return preds
+
+
+def find_rect_from_preds(preds):
+    L, N = skimage.measure.label(preds, return_num=True, background=0)
+    if N > 0:
+        L_no_bg = L[L != -1].flatten()
+        vals, counts = scipy.stats.mode(L_no_bg)
+        part_label = int(vals[0])
+
+        indices = np.where(L == part_label)
+        xmin = indices[0].min()
+        xmax = indices[0].max()
+        ymin = indices[1].min()
+        ymax = indices[1].max()
+
+        return Box(xmin, xmax, ymin, ymax)
+    else:
+        return Box(-1, -1, -1, -1)

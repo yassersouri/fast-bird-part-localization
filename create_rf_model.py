@@ -56,7 +56,7 @@ def main():
     preds = model.predict_proba(X)
     print sklearn.metrics.auc(y, preds[:, 0])
 
-    joblib.dump(model, 'detectors/test_model.mdl', compress=3)
+    joblib.dump(model, 'detectors/%s_model.mdl' % part_name, compress=3)
     print 'learned in', (dt.now() - l_start)
     print 'finsihed in', (dt.now() - start)
 
