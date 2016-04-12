@@ -1,17 +1,3 @@
-# Work in Progress
-
-I'm in progress of cleaning up my original code and putting it here. So please wait a little while.
-
-__TODO__:
- - [X] Extracting code from notebook about postprocessing.
- - [X] Extracting code from notebook about visualization.
- - [X] Adding description on how to use the pretrined model.
- - [X] Adding description on how to train a new model from CUB.
- - [ ] Adding description on how to train a new model from own data.
- - [ ] Adding code for PCP evaluation.
- - [ ] Adding bounding box regression for better PCP.
-
-
 # fast-bird-part-localization
 Code for Fast Bird Part Localization part of the following paper:
 
@@ -70,3 +56,18 @@ This is the result you get:
 ![Result](https://github.com/yassersouri/fast-bird-part-localization/blob/master/result.png)
 
 You can also take a look at the [notebook example](https://github.com/yassersouri/fast-bird-part-localization/blob/master/notebooks/example-usage.ipynb)
+
+
+
+## Work in Progress
+
+I'm in progress of cleaning up my original code and putting it here. So please wait a little while.
+
+__TODO__:
+ - [X] Extracting code from notebook about postprocessing.
+ - [X] Extracting code from notebook about visualization.
+ - [X] Adding description on how to use the pretrined model.
+ - [X] Adding description on how to train a new model from CUB.
+ - [ ] Adding description on how to train a new model from own data.
+ - [ ] Adding code for PCP evaluation.
+ - [ ] Adding bounding box regression for better PCP.
