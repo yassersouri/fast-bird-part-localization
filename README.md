@@ -63,3 +63,6 @@ img = caffe.io.load_image('/path/to/bird.jpg')
 head, head_prob = fbp.detect(img)
 fbp.draw(img, head, head_prob)
 ```
+This is the result you get:
+
+![Result](https://github.com/yassersouri/fast-bird-part-localization/blob/master/result.png)
