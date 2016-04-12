@@ -49,6 +49,8 @@ Changing `part_name` variable in `create_rf_model.py` file to `body` instead of 
 
 ### Testing
 
+For localization you can run something like this.
+
 ```python
 import sys
 sys.path.append('/path/to/projectroot/')
@@ -66,3 +68,5 @@ fbp.draw(img, head, head_prob)
 This is the result you get:
 
 ![Result](https://github.com/yassersouri/fast-bird-part-localization/blob/master/result.png)
+
+You can also take a look at the [notebook example](https://github.com/yassersouri/fast-bird-part-localization/blob/master/notebooks/example-usage.ipynb)
