@@ -100,7 +100,7 @@ class DeepHelper(object):
         box = geometry_utils.Box.box_from_img(img)
         self.init_with_image(img)
 
-        positive_points = part_box.generate_points_inside(param=settings.POISSON_PART_RADIUS[part_name])
+        positive_points = part_box.generate_points_inside(param=settings.POISSON_PART_RADIUS[part_name], img=img)
 
         negative_points = box.generate_points_inside(param=settings.POISSON_NEGATIVE_RADIUS, img=img)
         negative_points = geometry_utils.filter_points(negative_points, part_box)
