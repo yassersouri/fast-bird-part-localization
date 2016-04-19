@@ -1,7 +1,8 @@
 import numpy as np
 import cv2
 from poisson_disk import PoissonDiskSampler
-import skimage
+import skimage.morphology
+import skimage.measure
 import scipy.stats
 
 
@@ -210,7 +211,7 @@ def post_process_preds(preds):
 def find_rect_from_preds(preds):
     L, N = skimage.measure.label(preds, return_num=True, background=0)
     if N > 0:
-        L_no_bg = L[L != -1].flatten()
+        L_no_bg = L[L != 0].flatten()
         vals, counts = scipy.stats.mode(L_no_bg)
         part_label = int(vals[0])
 
